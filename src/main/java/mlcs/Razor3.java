@@ -5,6 +5,7 @@ import mlcs.util.Queues;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
@@ -13,52 +14,76 @@ import java.util.concurrent.RecursiveTask;
  * Dominated nodes razor.
  * Using non-dominant filtering, mark dominated locations.
  */
-public class Razor {
-  short level;
+public class Razor3 {
+
   Mlcs mlcs;
-  boolean weakDominated = false;
+  short level;
 
-  public Razor(Mlcs mlcs, short level) {
-    this.level = level;
-    this.mlcs = mlcs;
-  }
-
-  public Razor(Mlcs mlcs, short level, boolean weakDominated) {
-    this.weakDominated = weakDominated;
-    this.level = level;
+  public Razor3(Mlcs mlcs, int level) {
+    this.level = (short) level;
     this.mlcs = mlcs;
   }
 
   /**
-   * Using multiple thread,dive in the IndexTree to find dominated locations.
+   * Using multiple thread,dig in the IndexTree to find dominated locations.
+   *
    * @param pool thread pool
    * @param locs a list of locations
    * @return [original removed counts,new dominated counts]
    */
   public int[] shave(ForkJoinPool pool, ArrayList<Location> locs) {
     long startTime = System.currentTimeMillis();
-    //1. create index tree
-    IndexTree indexTree = new IndexTree(mlcs.seqs.size());
+    //1.1.create a minimal index tree by key locations
     int disabled = 0;
     for (Location id : locs) {
-      if (!id.isDiscard()) indexTree.put(id);
-      else disabled++;
+      if (id.isDiscard()) disabled++;
     }
-    //2. build index tree
-    indexTree.build();
+    Set<Location> keyLocs = IndexTree.findKeyLocs(locs);
+    IndexTree keyTree = new IndexTree(mlcs.seqs.size());
+    for (Location id : keyLocs) {
+      id.setReserved(true);
+      keyTree.put(id);
+    }
+    // 1.2. build the minimal index tree
+    keyTree.build();
 
-    //3. filter locations by dominate relation
-    LinkedList<ForkJoinTask<Integer>> tasks2 = new java.util.LinkedList<>();
+    // 1.3. filter all locations using the minimal tree
+    int marked = 0;
+    LinkedList<ForkJoinTask<Integer>> tasks2 = new LinkedList<>();
     List<int[]> segs = Queues.split(locs.size(), pool.getParallelism());
     for (int[] seg : segs) {
-      tasks2.add(pool.submit(new Blade(indexTree, locs, seg[0], seg[1], weakDominated)));
+      tasks2.add(pool.submit(new Blade(keyTree, locs, seg[0], seg[1], false)));
     }
-    //collect results
-    int marked = 0;
+    int keyMarked = 0;
     for (ForkJoinTask<Integer> task : tasks2) {
-      marked += task.join();
+      int newer = task.join();
+      marked += newer;
+      keyMarked += newer;
     }
-    System.out.println(this.level + " sort(" + (locs.size() - disabled) + "-" + marked + ") using " + (System.currentTimeMillis() - startTime));
+
+    //2.1 create a index tree which contains all locations.
+    IndexTree otherTree = new IndexTree(mlcs.seqs.size());
+    for (Location id : locs) {
+      if (!id.isDiscard() && !keyLocs.contains(id)) {
+        id.status = 0;
+        otherTree.put(id);
+      }
+    }
+    //2.2 build the tree
+    otherTree.build();
+    //2.3 filter
+    segs = Queues.split(locs.size(), pool.getParallelism());
+    tasks2.clear();
+    for (int[] seg : segs) {
+      tasks2.add(pool.submit(new Blade(otherTree, locs, seg[0], seg[1], false)));
+    }
+    int otherMarked = 0;
+    for (ForkJoinTask<Integer> task : tasks2) {
+      int newer = task.join();
+      otherMarked += newer;
+      marked += newer;
+    }
+    System.out.println(this.level + " sort(" + (locs.size() - disabled) + "-" + marked + "{" + keyMarked + "," + otherMarked + "}" + ") using " + (System.currentTimeMillis() - startTime));
     return new int[]{disabled, marked};
   }
 
@@ -69,6 +94,7 @@ public class Razor {
     ArrayList<Location> locations;
     IndexTree matrix;
     int from, to;
+
     boolean weakDominated;
 
     public Blade(IndexTree matrix, ArrayList<Location> locations, int from, int to, boolean weakDominated) {
@@ -93,6 +119,7 @@ public class Razor {
           }
         }
       }
+
       return count;
     }
   }

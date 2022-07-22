@@ -10,9 +10,15 @@ In summary, the main contributions of this algorithm are:
 ## Install & Run
 
  1. Install JDK-11;
- 2. Put the data files to be processed into the 'file' folder of this project;
- 3. Run the following command in a shell command window.
+ 2. Run the following command in a shell command window.
+```bash
+java -jar -Xmx3G kp-mlcs.jar /path/to/your/data/file algo=[ep|ap|quick_ap] [other=value]
 ```
-java -jar -Xmx3G kp-mlcs.jar [fileName]
+ - algo=ep: Mining MLCS using exact algorithms;
+ - algo=ap: Mining MLCS using approximate algorithms;
+ - algo=quick_ap: Mining MLCS using a quick approximate algorithm;
+
+In addition, you can run the following command for help.
+```bash
+java -jar kp-mlcs.jar
 ```
- - [fileName]: program parameter, files should be put in 'file' Folder to be read;

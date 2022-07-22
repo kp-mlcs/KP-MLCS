@@ -1,3 +1,21 @@
+/*
+ * Beangle, Agile Development Scaffold and Toolkits.
+ *
+ * Copyright © 2005, The Beangle Software.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package mlcs;
 
 import java.io.Serializable;
@@ -45,6 +63,32 @@ public class Node implements Serializable {
   @Override
   public String toString() {
     return id + " l:" + level + " d:" + ((null == pres) ? 0 : pres.size());
+  }
+
+  public boolean isPresEmpty() {
+    return null == pres || pres.isEmpty();
+  }
+
+  /**
+   * add predecessor
+   * FIXME
+   */
+  public synchronized boolean addPredecessor(EPCrawler crawler, Node from, int newLevel) {
+    if (null == pres) return false;
+    boolean removed = pres.remove(from.id);
+    if (removed) {
+      if (this.level < newLevel) {
+        this.level = (short) newLevel;
+      }
+      if (pres.isEmpty()) {
+        pres = null;
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 
   @Override

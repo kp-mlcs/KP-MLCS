@@ -13,47 +13,41 @@ import java.util.concurrent.RecursiveTask;
  * Dominated nodes razor.
  * Using non-dominant filtering, mark dominated locations.
  */
-public class Razor {
-  short level;
+public class Razor2 {
+
   Mlcs mlcs;
-  boolean weakDominated = false;
+  int level;
 
-  public Razor(Mlcs mlcs, short level) {
-    this.level = level;
-    this.mlcs = mlcs;
-  }
-
-  public Razor(Mlcs mlcs, short level, boolean weakDominated) {
-    this.weakDominated = weakDominated;
+  public Razor2(Mlcs mlcs,int level) {
     this.level = level;
     this.mlcs = mlcs;
   }
 
   /**
-   * Using multiple thread,dive in the IndexTree to find dominated locations.
+   * Using multiple thread,dig in the IndexTree to find dominated locations.
+   *
    * @param pool thread pool
    * @param locs a list of locations
    * @return [original removed counts,new dominated counts]
    */
   public int[] shave(ForkJoinPool pool, ArrayList<Location> locs) {
     long startTime = System.currentTimeMillis();
-    //1. create index tree
-    IndexTree indexTree = new IndexTree(mlcs.seqs.size());
+    IndexGraph indexGraph = new IndexGraph(mlcs.seqs.size());
     int disabled = 0;
+    int idSeq = 0;
     for (Location id : locs) {
-      if (!id.isDiscard()) indexTree.put(id);
+      if (!id.isDiscard()) indexGraph.put(idSeq, id);
       else disabled++;
+      idSeq++;
     }
-    //2. build index tree
-    indexTree.build();
+    indexGraph.build();
+    indexGraph.reserveHead(locs);
 
-    //3. filter locations by dominate relation
-    LinkedList<ForkJoinTask<Integer>> tasks2 = new java.util.LinkedList<>();
+    LinkedList<ForkJoinTask<Integer>> tasks2 = new LinkedList<>();
     List<int[]> segs = Queues.split(locs.size(), pool.getParallelism());
     for (int[] seg : segs) {
-      tasks2.add(pool.submit(new Blade(indexTree, locs, seg[0], seg[1], weakDominated)));
+      tasks2.add(pool.submit(new Blade(indexGraph, locs, seg[0], seg[1])));
     }
-    //collect results
     int marked = 0;
     for (ForkJoinTask<Integer> task : tasks2) {
       marked += task.join();
@@ -67,17 +61,15 @@ public class Razor {
    */
   static class Blade extends RecursiveTask<Integer> {
     ArrayList<Location> locations;
-    IndexTree matrix;
+    IndexGraph matrix;
     int from, to;
-    boolean weakDominated;
 
-    public Blade(IndexTree matrix, ArrayList<Location> locations, int from, int to, boolean weakDominated) {
+    public Blade(IndexGraph matrix, ArrayList<Location> locations, int from, int to) {
       super();
       this.matrix = matrix;
       this.locations = locations;
       this.from = from;
       this.to = to;
-      this.weakDominated = weakDominated;
     }
 
     public Integer compute() {
@@ -85,10 +77,10 @@ public class Razor {
       for (int i = from; i < to; i++) {
         Location src = locations.get(i);
         if (src.isUnknown()) {
-          if (matrix.dominated(src)) {
+          if(matrix.dominated(src)){
             src.setReserved(false);
             count += 1;
-          } else {
+          }else{
             src.setReserved(true);
           }
         }

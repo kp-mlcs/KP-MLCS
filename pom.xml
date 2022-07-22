@@ -1,6 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.beangle</groupId>
+    <artifactId>beangle-java</artifactId>
+    <version>28.2</version>
+  </parent>
   <groupId>mlcs</groupId>
   <artifactId>kp-mlcs</artifactId>
   <packaging>jar</packaging>
@@ -14,37 +19,26 @@
   <properties>
     <bundle.symbolicName>mlcs</bundle.symbolicName>
     <bundle.namespace>mlcs</bundle.namespace>
-    <java.version>11</java.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <build>
-    <defaultGoal>clean install</defaultGoal>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.8.1</version>
-          <configuration>
-            <source>${java.version}</source>
-            <target>${java.version}</target>
-            <release>${java.version}</release>
-            <encoding>${project.build.sourceEncoding}</encoding>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
     <plugins>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>${mvn.license.version}</version>
+        <configuration>
+          <skip>true</skip>
+          <strictCheck>false</strictCheck>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.2.0</version>
         <configuration>
           <archive>
             <manifest>
-              <mainClass>mlcs.Crawler</mainClass>
+              <mainClass>mlcs.KPMLCS</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -52,7 +46,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.2.0</version>
         <configuration>
           <skip>true</skip>
         </configuration>

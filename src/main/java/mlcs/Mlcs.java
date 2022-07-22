@@ -1,6 +1,25 @@
+/*
+ * Beangle, Agile Development Scaffold and Toolkits.
+ *
+ * Copyright © 2005, The Beangle Software.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package mlcs;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -62,6 +81,7 @@ public class Mlcs {
 
   /**
    * Calculate a tail upbound for given location
+   *
    * @param index
    * @return
    */
@@ -108,7 +128,7 @@ public class Mlcs {
    * All reachable successors after the current node.
    * The reachable successor is possible to reach the end point on the longest path.
    */
-  public List<Location> nextReachableLocations(Location current, Limit limit, short level) {
+  public List<Location> nextReachableLocations(Location current, int mlcsLength, short level) {
     List<Location> nexts = new ArrayList<Location>(charset.size());
     for (int i = 0; i < successorTable.length; i++) {
       int snum = seqs.size();
@@ -120,7 +140,7 @@ public class Mlcs {
       }
       if (tmp[tmp.length - 1] > 0) {
         int possible = this.tailUpbound(tmp);
-        if (possible + level >= limit.mlcsLength) {
+        if (possible + level >= mlcsLength) {
           nexts.add(new Location(tmp));
         }
       }
@@ -185,7 +205,7 @@ public class Mlcs {
   /**
    * Read the file to get all strings and character sets
    */
-  public static String[] loadData(String file) throws IOException {
+  public static String[] loadData(File file) throws IOException {
     List<String> datas = new ArrayList<>();
     BufferedReader in = new BufferedReader(new FileReader(file));
     String str = in.readLine();
@@ -201,6 +221,7 @@ public class Mlcs {
 
   /**
    * Build the mlcs model using given strings
+   *
    * @param strs
    * @return
    */
@@ -217,6 +238,7 @@ public class Mlcs {
 
   /**
    * Calculate the matched counts for this mlcs problem.
+   *
    * @return
    */
   public BigDecimal matchedCounts() {

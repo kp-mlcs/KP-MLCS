@@ -1,6 +1,23 @@
+/*
+ * Beangle, Agile Development Scaffold and Toolkits.
+ *
+ * Copyright © 2005, The Beangle Software.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package mlcs;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -21,6 +38,7 @@ public class Graph {
 
   /**
    * How many point in the layer which contains the most points.
+   *
    * @return
    */
   public int height() {
@@ -33,8 +51,19 @@ public class Graph {
     return max;
   }
 
+  public int size() {
+    int count = 0;
+    for (HashMap<Location, Node> ns : nodes) {
+      if (ns != null) {
+        count += ns.size();
+      }
+    }
+    return count;
+  }
+
   /**
    * Fetch the node corresponding the given id and level.
+   *
    * @param id
    * @param level
    * @return
@@ -45,6 +74,7 @@ public class Graph {
 
   /**
    * Register a layer
+   *
    * @param level
    * @param ns
    */
@@ -54,6 +84,7 @@ public class Graph {
 
   /**
    * Register a single node
+   *
    * @param level
    * @param id
    * @param n
@@ -69,6 +100,7 @@ public class Graph {
 
   /**
    * Query layer nodes at the given level
+   *
    * @param l
    * @return
    */
@@ -78,6 +110,7 @@ public class Graph {
 
   /**
    * Calculate all MLCS paths
+   *
    * @return
    */
   public List<List<Location>> paths() {
@@ -86,15 +119,16 @@ public class Graph {
 
   /**
    * Calculate limit MLCS paths
-   * @limit  -1 represent unlimit
+   *
    * @return the path list
+   * @limit -1 represent unlimit
    */
   public List<List<Location>> paths(int limit) {
     List<List<Location>> results = new ArrayList<>();
     Stack<Node> stack = new Stack<>();
+    Stack<Location> path = new Stack<>();
     Collection<Node> lasts = getPredecessors(end, end.level).values();
     for (Node n : lasts) stack.push(n);
-    Stack<Location> path = new Stack<>();
 
     while ((limit < 0 || results.size() < limit) && !stack.isEmpty()) {
       Node current = stack.peek();
@@ -120,28 +154,27 @@ public class Graph {
 
   /**
    * Stat the MLCS count
-   * @param maxLevel
+   *
    * @param totalCreateCount
    * @param highestCapacity
    * @param startAt
    * @return
    */
-  public Result stat(int maxLevel, long totalCreateCount, long highestCapacity, long startAt) {
+  public Result stat(long totalCreateCount, long highestCapacity, long startAt) {
     Location startLocation = mlcs.start;
     Location endLocation = mlcs.end;
-    this.maxLevel = maxLevel;
     Node end = nodes[maxLevel + 1].get(endLocation);
     this.end = end;
     link();
 
     Set<Location> keyLocs = new HashSet<Location>();
-    BigDecimal matchedCount = new BigDecimal(0); // Number of matched results
+    long matchedCount = 0; // Number of matched results
     LinkedList<Location> queue = new LinkedList<>();
 
     // The number of alternative paths from the virtual endpoint to the node, with an initial endpoint of 1
-    Map<Location, BigDecimal> routeCounts = new HashMap<Location, BigDecimal>();
+    Map<Location, Long> routeCounts = new HashMap<Location, Long>();
 
-    routeCounts.put(endLocation, new BigDecimal(1));
+    routeCounts.put(endLocation, (long) 1);
 
     Location queueEnd = endLocation;
     queue.addLast(endLocation);
@@ -153,7 +186,12 @@ public class Graph {
       for (Map.Entry<Location, Node> p : getPredecessors(node, currentLevel).entrySet()) {
         Location ploc = p.getKey();
         if (keyLocs.contains(ploc)) {
-          routeCounts.put(ploc, routeCounts.get(ploc).add(routeCounts.get(loc)));
+          if (routeCounts.get(ploc) < 0 || routeCounts.get(loc) < 0) {
+            routeCounts.put(ploc, (long) -1);
+          } else {
+            long newCount = routeCounts.get(ploc) + routeCounts.get(loc);
+            routeCounts.put(ploc, (newCount > Integer.MAX_VALUE) ? (long) -1 : newCount);
+          }
         } else {
           keyLocs.add(ploc);
           routeCounts.put(ploc, routeCounts.get(loc));
@@ -199,6 +237,7 @@ public class Graph {
 
   /**
    * Query the predecessors for given node.
+   *
    * @param n
    * @param level
    * @return
@@ -213,5 +252,11 @@ public class Graph {
       if (null != p) pres.put(id, p);
     }
     return pres;
+  }
+
+  public boolean largeThan(Graph graph) {
+    if (this.maxLevel > graph.maxLevel) return true;
+    else if (this.maxLevel < graph.maxLevel) return false;
+    else return this.size() > graph.size();
   }
 }

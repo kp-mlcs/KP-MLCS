@@ -1,10 +1,25 @@
+/*
+ * Beangle, Agile Development Scaffold and Toolkits.
+ *
+ * Copyright © 2005, The Beangle Software.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package mlcs;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * LocationStore is a layered storage structure.
@@ -35,6 +50,12 @@ class LocationStore {
     this.capacity = capacity;
   }
 
+  public void clear() {
+    for (int i = 0; i < levels.length; i++) {
+      levels[i] = null;
+    }
+  }
+
   /**
    * Restore the graph layer by layer from back to forward using persisted files.
    *
@@ -43,6 +64,7 @@ class LocationStore {
    */
   public Graph restore(short maxLevel) {
     Graph graph = new Graph(mlcs);
+    graph.maxLevel = maxLevel;
     graph.add((short) 0, mlcs.start, new Node(mlcs.start));
     graph.add((short) (maxLevel + 1), mlcs.end, new Node(mlcs.end));
     short l = maxLevel;
@@ -113,9 +135,8 @@ class LocationStore {
     if (memoryMode) {
       levels[level - 1] = nodes;
       size += nodes.size();
-      if (size > maxSize) {
-        maxSize = size;
-      }
+      if (size > maxSize) maxSize = size;
+
       if (size >= capacity) {
         System.out.println("Start persisting mode at size:" + size);
         memoryMode = false;
@@ -125,8 +146,13 @@ class LocationStore {
           levels[l - 1] = null;
         }
       }
+      if (memoryMode) {
+        // if location store is at memory mode,using recursive checks, remove points without successors.
+        int removeCount=backwardFilter((short) (level - 1));
+        //report(level - 1,removeCount);
+      }
     } else {
-      maxSize += nodes.size();
+      if (nodes.size() > maxSize) maxSize = nodes.size();
       serialize(level, nodes);
     }
   }
@@ -152,6 +178,7 @@ class LocationStore {
 
   /**
    * Iterate the layered location
+   *
    * @param level
    * @return
    */
@@ -172,6 +199,7 @@ class LocationStore {
 
   /**
    * Batch delete the nodes at a given level
+   *
    * @param level
    * @param removed
    */
@@ -189,6 +217,7 @@ class LocationStore {
 
   /**
    * Fetch the nodes at a given level
+   *
    * @param level
    * @return
    */
@@ -199,6 +228,43 @@ class LocationStore {
     } else {
       return levelNodes;
     }
+  }
+
+  private void report(int level, int removeCount) {
+    if (removeCount > 0) System.out.println(level + " backward remove " + removeCount + " nodes");
+  }
+
+  /**
+   * 过滤level层的点。通过观察后继是否存在
+   *
+   * @param startLevel
+   * @return
+   */
+  public int backwardFilter(short startLevel) {
+    if (startLevel <= 0) return 0;
+    short level = startLevel;
+    int totalRemoved = 0;
+    while (level > 0) {
+      List<Location> removed = new ArrayList<>();
+      HashMap<Location, Location> nextLevelNodes = get((short) (level + 1));
+      Iterator<Location> iterator = iterator(level);
+      while (iterator.hasNext()) {
+        Location id = iterator.next();
+        List<Location> successors = mlcs.nextLocations(id);
+        boolean hasNoneSuccessors = true;
+        for (Location loc : successors) {
+          if (nextLevelNodes.containsKey(loc)) {
+            hasNoneSuccessors = false;
+            break;
+          }
+        }
+        if (hasNoneSuccessors) removed.add(id);
+      }
+      remove(level, removed);
+      totalRemoved += removed.size();
+      if (removed.isEmpty()) break;
+    }
+    return totalRemoved;
   }
 
   /**
