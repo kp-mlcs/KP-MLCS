@@ -1,0 +1,24 @@
+*~
+.*
+
+# Build output directies
+target
+out
+
+# Eclipse specific files/directories
+.classpath
+.project
+.settings
+.metadata
+
+*.class
+*.log
+
+#idea
+*.iml
+*.ipr
+*.iws
+
+# sbt specific
+dist/*
+target/

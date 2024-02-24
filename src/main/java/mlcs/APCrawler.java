@@ -33,18 +33,18 @@ import java.util.concurrent.ForkJoinTask;
  * The strategy for filtering nodes is to rank by the respective sum values and then take a certain number.
  */
 public class APCrawler extends AbstractCrawler {
-  private int minReservedCount;
+  private int maxReservedCount;
   private float percent;
   private boolean approximate = false;
 
-  public APCrawler(Mlcs mlcs, LocationStore store, Limit limit, float percent, int minReservedCount) {
+  public APCrawler(Mlcs mlcs, LocationStore store, Limit limit, float percent, int maxReservedCount) {
     super(mlcs, store, limit);
-    this.minReservedCount = minReservedCount;
+    this.maxReservedCount = maxReservedCount;
     this.percent = percent;
   }
 
   public int calcReservedCount(int size) {
-    return Math.max(minReservedCount, (int) percent * size);
+    return Math.max(maxReservedCount, (int) percent * size);
   }
 
   /**

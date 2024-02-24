@@ -1,6 +1,7 @@
 package mlcs;
 
 import mlcs.util.Queues;
+import mlcs.util.Stopwatch;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -52,7 +53,7 @@ public class Razor2 {
     for (ForkJoinTask<Integer> task : tasks2) {
       marked += task.join();
     }
-    System.out.println(this.level + " sort(" + (locs.size() - disabled) + "-" + marked + ") using " + (System.currentTimeMillis() - startTime));
+    System.out.println(this.level + " sort(" + (locs.size() - disabled) + "-" + marked + ") using " + Stopwatch.format(System.currentTimeMillis() - startTime));
     return new int[]{disabled, marked};
   }
 

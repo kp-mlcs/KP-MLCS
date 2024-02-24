@@ -16,10 +16,12 @@ public class KPMLCS {
     if (args.length == 0) {
       System.out.println("Usage:KPMLCS /path/to/your/data/file algo=[ep|ap|quick_ap] [other=value]");
       System.out.println("      KPMLCS /path/to/your/data/file algo=ep");
-      System.out.println("      KPMLCS /path/to/your/data/file algo=ap [presison=0.2] [minReserved=500]");
+      System.out.println("      KPMLCS /path/to/your/data/file algo=ap [precision=0.2] [maxReserved=500]");
       System.out.println("      KPMLCS /path/to/your/data/file algo=quick_ap [estimateCount=length] [maxRetry=0] [increment=length/2]");
       return;
     }
+    System.out.println("Memory:" + Runtime.getRuntime().maxMemory() / (1024 * 1024) + "MB");
+    System.out.println("Processors:" + Runtime.getRuntime().availableProcessors());
     String algorithm = "quick_ap";
     Map<String, String> arguments = new HashMap<>();
     if (args.length >= 2) {
@@ -81,10 +83,10 @@ public class KPMLCS {
     long startAt = System.currentTimeMillis();
     Mlcs mlcs = Mlcs.build(Mlcs.loadData(sourceFile));
     float precision = Float.parseFloat(arguments.getOrDefault("precision", "0.2"));
-    int minReserved = Integer.parseInt(arguments.getOrDefault("minReserved", String.valueOf(mlcs.maxLength)));
+    int maxReserved = Integer.parseInt(arguments.getOrDefault("maxReserved", String.valueOf(mlcs.maxLength)));
     int estimateCount = Integer.parseInt(arguments.getOrDefault("estimateCount", String.valueOf(mlcs.maxLength)));
-    if (minReserved < estimateCount) {
-      throw new RuntimeException("Parameter minReserved cannot less than estimateCount");
+    if (maxReserved < estimateCount) {
+      throw new RuntimeException("Parameter maxReserved cannot less than estimateCount");
     }
     if (Float.compare(1, precision) <= 0) {
       System.out.println("The precision that approximate algorithm accepted should less than 1");
@@ -94,7 +96,7 @@ public class KPMLCS {
     int maxLevel = estimateLength(mlcs, arguments);
     System.out.println("obtain max length " + maxLevel);
     Limit limit = new Limit(mlcs.maxLength, maxLevel);
-    APCrawler apCrawler = new APCrawler(mlcs, store, limit, precision, minReserved);
+    APCrawler apCrawler = new APCrawler(mlcs, store, limit, precision, maxReserved);
     Graph graph = apCrawler.search();
     String resultFile = getOutFile(sourceFile, "ap_" + getFileShortName(sourceFile) + "_" + precision + ".txt");
     statResult(graph, store, resultFile, startAt);

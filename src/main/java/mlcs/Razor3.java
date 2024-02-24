@@ -1,6 +1,7 @@
 package mlcs;
 
 import mlcs.util.Queues;
+import mlcs.util.Stopwatch;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -83,7 +84,7 @@ public class Razor3 {
       otherMarked += newer;
       marked += newer;
     }
-    System.out.println(this.level + " sort(" + (locs.size() - disabled) + "-" + marked + "{" + keyMarked + "," + otherMarked + "}" + ") using " + (System.currentTimeMillis() - startTime));
+    System.out.println(this.level + " sort(" + (locs.size() - disabled) + "-" + marked + "{" + keyMarked + "," + otherMarked + "}" + ") using " + Stopwatch.format(System.currentTimeMillis() - startTime));
     return new int[]{disabled, marked};
   }
 
