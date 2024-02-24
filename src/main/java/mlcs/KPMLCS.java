@@ -1,5 +1,6 @@
 package mlcs;
 
+import mlcs.util.Env;
 import mlcs.util.Stopwatch;
 
 import java.io.File;
@@ -20,8 +21,7 @@ public class KPMLCS {
       System.out.println("      KPMLCS /path/to/your/data/file algo=quick_ap [estimateCount=length] [maxRetry=0] [increment=length/2]");
       return;
     }
-    System.out.println("Memory:" + Runtime.getRuntime().maxMemory() / (1024 * 1024) + "MB");
-    System.out.println("Processors:" + Runtime.getRuntime().availableProcessors());
+    Env.print();
     String algorithm = "quick_ap";
     Map<String, String> arguments = new HashMap<>();
     if (args.length >= 2) {
