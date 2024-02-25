@@ -24,10 +24,10 @@ import mlcs.util.Stopwatch;
 import java.awt.*;
 import java.io.*;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.*;
 
 /**
  * MLCS Result
@@ -62,6 +62,7 @@ public class Result {
   public String buildResultString() {
     StringWriter fw = new StringWriter();
     Mlcs mlcs = graph.mlcs;
+    fw.append("envs:\n").append(mlcs.env.toString()).append("\n");
     fw.append("sequences:\n");
     for (Sequence seq : mlcs.seqs) {
       fw.append("  ");
@@ -74,8 +75,8 @@ public class Result {
     fw.append("totalCreateCount: ").append(String.valueOf(totalCreateCount)).append('\n');
     fw.append("highestCapacity: ").append(String.valueOf(highestCapacity)).append('\n');
     fw.append("time: ").append(getTime()).append('\n');
-    fw.append("startAt: ").append(String.valueOf(startAt)).append('\n');
-    fw.append("endAt: ").append(String.valueOf(endAt)).append('\n');
+    fw.append("startAt: ").append(formatTimeMills(startAt)).append('\n');
+    fw.append("endAt: ").append(formatTimeMills(endAt)).append('\n');
     List<List<Location>> paths = null;
     if (null != mlcsCount) {
       if (mlcsCount.compareTo(new BigDecimal(100)) <= 0) {
@@ -104,6 +105,23 @@ public class Result {
       fw.append('\n');
     }
     return fw.toString();
+  }
+
+  private static String formatTimeMills(long milli) {
+    var d = new Date();
+    d.setTime(milli);
+    var df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    return df.format(d);
+  }
+
+  private static long parseToTimeMills(String str) {
+    var df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    try {
+      var d = df.parse(str);
+      return d.getTime();
+    } catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -167,9 +185,9 @@ public class Result {
         } else if (line.startsWith("highestCapacity")) {
           highestCapacity = Long.parseLong(contentOf(line));
         } else if (line.startsWith("startAt")) {
-          startAt = Long.parseLong(contentOf(line));
+          startAt = parseToTimeMills(contentOf(line));
         } else if (line.startsWith("endAt")) {
-          endAt = Long.parseLong(contentOf(line));
+          endAt = parseToTimeMills(contentOf(line));
         } else if (line.startsWith("sequences")) {
           List<String> datas = new ArrayList<>();
           line = reader.readLine();

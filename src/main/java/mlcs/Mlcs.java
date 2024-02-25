@@ -44,7 +44,7 @@ public class Mlcs {
   short[][][] distanceTable;// char->seq->table
   // maximum current subscript set
   public final int maxLength;
-  int maxThread = 0;
+  Env env = null;
 
   /**
    * building successor tables
@@ -103,7 +103,7 @@ public class Mlcs {
   }
 
   public ForkJoinPool newPool() {
-    return (maxThread > 0) ? new ForkJoinPool(maxThread) : new ForkJoinPool();
+    return (env.parallelism > 0) ? new ForkJoinPool(env.parallelism) : new ForkJoinPool();
   }
 
   /**

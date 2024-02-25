@@ -1,6 +1,5 @@
 package mlcs;
 
-import mlcs.util.Env;
 import mlcs.util.Stopwatch;
 
 import java.io.File;
@@ -15,13 +14,12 @@ public class KPMLCS {
 
   public static void main(String[] args) throws Exception {
     if (args.length == 0) {
-      System.out.println("Usage:KPMLCS /path/to/your/data/file algo=[ep|ap|quick_ap] [other=value]");
+      System.out.println("Usage:KPMLCS /path/to/your/data/file algo=[ep|ap|quick_ap] [parallelism=32] [other=value]");
       System.out.println("      KPMLCS /path/to/your/data/file algo=ep");
       System.out.println("      KPMLCS /path/to/your/data/file algo=ap [precision=0.2] [maxReserved=500]");
       System.out.println("      KPMLCS /path/to/your/data/file algo=quick_ap [estimateCount=length] [maxRetry=0] [increment=length/2]");
       return;
     }
-    Env.print();
     String algorithm = "quick_ap";
     Map<String, String> arguments = new HashMap<>();
     if (args.length >= 2) {
@@ -30,6 +28,7 @@ public class KPMLCS {
         int eqIndx = arg.indexOf('=');
         if (arg.startsWith("algo")) {
           algorithm = arg.substring(eqIndx + 1).trim();
+          arguments.put("algo", algorithm);
         } else if (eqIndx > 0) {
           String key = arg.substring(0, eqIndx).trim();
           String value = arg.substring(eqIndx + 1).trim();
@@ -37,7 +36,6 @@ public class KPMLCS {
         }
       }
     }
-
     List<File> files = find(args[0]);
     for (File sourceFile : files) {
       System.out.println("processing file " + sourceFile + " using algorithm:" + algorithm);
@@ -62,6 +60,7 @@ public class KPMLCS {
   public static void ep(File sourceFile, Map<String, String> arguments) throws IOException {
     long startAt = System.currentTimeMillis();
     Mlcs mlcs = Mlcs.build(Mlcs.loadData(sourceFile));
+    mlcs.env = Env.get(arguments);
     LocationStore store = buildStore(mlcs);
     int maxLevel = estimateLength(mlcs, arguments);
     System.out.println("obtain max length " + maxLevel);
@@ -82,6 +81,7 @@ public class KPMLCS {
   public static void ap(File sourceFile, Map<String, String> arguments) throws IOException {
     long startAt = System.currentTimeMillis();
     Mlcs mlcs = Mlcs.build(Mlcs.loadData(sourceFile));
+    mlcs.env = Env.get(arguments);
     float precision = Float.parseFloat(arguments.getOrDefault("precision", "0.2"));
     int maxReserved = Integer.parseInt(arguments.getOrDefault("maxReserved", String.valueOf(mlcs.maxLength)));
     int estimateCount = Integer.parseInt(arguments.getOrDefault("estimateCount", String.valueOf(mlcs.maxLength)));
@@ -112,6 +112,7 @@ public class KPMLCS {
   public static void quickAp(File sourceFile, Map<String, String> arguments) throws IOException {
     long startAt = System.currentTimeMillis();
     Mlcs mlcs = Mlcs.build(Mlcs.loadData(sourceFile));
+    mlcs.env = Env.get(arguments);
     int mlcsLength = estimateLength(mlcs, arguments);
     long endAt = System.currentTimeMillis();
     System.out.println("file:" + sourceFile + " n=" + mlcs.maxLength + " length=" + mlcsLength + " using:" + Stopwatch.format(endAt - startAt));
