@@ -23,6 +23,7 @@ import mlcs.util.Stopwatch;
 
 import java.awt.*;
 import java.io.*;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,7 +35,7 @@ import java.util.List;
  */
 public class Result {
   public final Graph graph;
-  public final long mlcsCount; // number of matched results
+  public final BigDecimal mlcsCount; // number of matched results
   public final int maxLevel; // length of matching results
   public final long nodeCount;// key node counts
   public final long startAt;// the algorithm start time
@@ -42,7 +43,7 @@ public class Result {
   public final long totalCreateCount; // total create node count in this process
   public final long highestCapacity; // highest node count in this process
 
-  public Result(Graph graph, long count, long nodeCount, int maxLevel, long totalCreateCount,
+  public Result(Graph graph, BigDecimal count, long nodeCount, int maxLevel, long totalCreateCount,
                 long highestCapacity, long startAt, long endAt) {
     this.graph = graph;
     this.mlcsCount = count;
@@ -76,8 +77,8 @@ public class Result {
     fw.append("startAt: ").append(String.valueOf(startAt)).append('\n');
     fw.append("endAt: ").append(String.valueOf(endAt)).append('\n');
     List<List<Location>> paths = null;
-    if (mlcsCount > 0) {
-      if (mlcsCount <= 100) {
+    if (null != mlcsCount) {
+      if (mlcsCount.compareTo(new BigDecimal(100)) <= 0) {
         fw.append("mlcs:\n");
         paths = graph.paths();
       } else {
@@ -143,7 +144,7 @@ public class Result {
    */
   public static Result parse(String fileName) {
     int maxLevel = 0;
-    long mlcsCount = 0;
+    BigDecimal mlcsCount = null;
     int nodeCount = 0;
     long totalCreateCount = 0;
     long highestCapacity = 0;
@@ -158,7 +159,7 @@ public class Result {
         if (line.startsWith("maxLevel")) {
           maxLevel = Integer.parseInt(contentOf(line));
         } else if (line.startsWith("mlcsCount")) {
-          mlcsCount = Long.parseLong(contentOf(line));
+          mlcsCount = new BigDecimal(contentOf(line).toCharArray());
         } else if (line.startsWith("nodeCount")) {
           nodeCount = Integer.parseInt(contentOf(line));
         } else if (line.startsWith("totalCreateCount")) {

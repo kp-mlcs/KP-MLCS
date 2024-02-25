@@ -18,6 +18,7 @@
  */
 package mlcs;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -168,13 +169,13 @@ public class Graph {
     link();
 
     Set<Location> keyLocs = new HashSet<Location>();
-    long matchedCount = 0; // Number of matched results
+    BigDecimal matchedCount = new BigDecimal(0); // Number of matched results
     LinkedList<Location> queue = new LinkedList<>();
 
     // The number of alternative paths from the virtual endpoint to the node, with an initial endpoint of 1
-    Map<Location, Long> routeCounts = new HashMap<Location, Long>();
+    Map<Location, BigDecimal> routeCounts = new HashMap<>();
 
-    routeCounts.put(endLocation, (long) 1);
+    routeCounts.put(endLocation, new BigDecimal(1));
 
     Location queueEnd = endLocation;
     queue.addLast(endLocation);
@@ -186,12 +187,7 @@ public class Graph {
       for (Map.Entry<Location, Node> p : getPredecessors(node, currentLevel).entrySet()) {
         Location ploc = p.getKey();
         if (keyLocs.contains(ploc)) {
-          if (routeCounts.get(ploc) < 0 || routeCounts.get(loc) < 0) {
-            routeCounts.put(ploc, (long) -1);
-          } else {
-            long newCount = routeCounts.get(ploc) + routeCounts.get(loc);
-            routeCounts.put(ploc, (newCount > Integer.MAX_VALUE) ? (long) -1 : newCount);
-          }
+          routeCounts.put(ploc, routeCounts.get(ploc).add(routeCounts.get(loc)));
         } else {
           keyLocs.add(ploc);
           routeCounts.put(ploc, routeCounts.get(loc));
