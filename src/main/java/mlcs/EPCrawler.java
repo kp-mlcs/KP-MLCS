@@ -33,8 +33,8 @@ import java.util.concurrent.ForkJoinTask;
  */
 public class EPCrawler extends AbstractCrawler {
 
-  public EPCrawler(Mlcs mlcs, LocationStore store, Limit limit) {
-    super(mlcs, store, limit);
+  public EPCrawler(Mlcs mlcs, Setting setting, LocationStore store, Limit limit) {
+    super(mlcs, setting, store, limit);
   }
 
   /**
@@ -45,7 +45,7 @@ public class EPCrawler extends AbstractCrawler {
     ArrayList<Location> fronts = new ArrayList<>();
     fronts.add(start.id);
 
-    ForkJoinPool pool = this.mlcs.newPool();
+    ForkJoinPool pool = this.setting.newPool();
     while (!fronts.isEmpty()) {
       this.currentLevel = (short) (this.currentLevel + 1);
       if (this.currentLevel > limit.mlcsLength) limit.mlcsLength = this.currentLevel;
@@ -99,7 +99,7 @@ public class EPCrawler extends AbstractCrawler {
       int nonImmediateRemoveCnt = 0;
       if (fronts.size() > 1) {
 //      Razor razor = new Razor(this.mlcs,this.currentLevel);
-        Razor3 razor = new Razor3(this.mlcs, this.currentLevel);
+        Razor3 razor = new Razor3(this.mlcs, this.setting, this.currentLevel);
         int[] rs = razor.shave(pool, fronts);
         // int[] rs = FirstOrderSorter.shave(this.minLevel,pool,fronts);
         immediateRemoveCnt = rs[0];
@@ -116,12 +116,12 @@ public class EPCrawler extends AbstractCrawler {
       nodes.entrySet().removeIf(entry -> entry.getKey().isDiscard());
       locStore.add(this.currentLevel, nodes);
       //System.out.println(this.minLevel + " remove nodes(" + allNodeCnt + " - " + removeCnt + "(" + immediateRemoveCnt + "+" + nonImmediateRemoveCnt + "))");
-      System.out.print("\rmining level " + currentLevel + " " + (currentLevel * 100.0 / limit.mlcsLength) + "% ");
+      setting.notify("mining level " + currentLevel + " " + (currentLevel * 100.0 / limit.mlcsLength) + "% ");
     }
     pool.shutdown();
     //restore the graph from back to forward.
     Graph graph = locStore.restore(this.currentLevel);
-    System.out.println("\rmining complete.");
+    setting.notify("mining complete.");
     return graph;
   }
 }

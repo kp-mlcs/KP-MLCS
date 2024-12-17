@@ -26,15 +26,23 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * MLCS Result
  * It contains result graph,mlcs max level and counts;
  */
 public class Result {
+  private static final AtomicInteger generator = new AtomicInteger(1);
+
+  public final String id;
   public final Graph graph;
+  public final Setting setting;
+  public final Setting.Env env;
   public final BigDecimal mlcsCount; // number of matched results
   public final int maxLevel; // length of matching results
   public final long nodeCount;// key node counts
@@ -43,8 +51,11 @@ public class Result {
   public final long totalCreateCount; // total create node count in this process
   public final long highestCapacity; // highest node count in this process
 
-  public Result(Graph graph, BigDecimal count, long nodeCount, int maxLevel, long totalCreateCount,
+  public Result(String id, Setting setting, Setting.Env env, Graph graph, BigDecimal count, long nodeCount, int maxLevel, long totalCreateCount,
                 long highestCapacity, long startAt, long endAt) {
+    this.id = id;
+    this.setting = setting;
+    this.env = env;
     this.graph = graph;
     this.mlcsCount = count;
     this.maxLevel = maxLevel;
@@ -55,6 +66,16 @@ public class Result {
     this.highestCapacity = highestCapacity;
   }
 
+  public static String generateId(Long timeMillis) {
+    var d = new java.util.Date();
+    d.setTime(timeMillis);
+    var df = new SimpleDateFormat("yyyyMMddHHmmss");
+    var timestamp = df.format(d);
+
+    return "kp-mlcs-"+timestamp +"-"+ generator.getAndIncrement();
+  }
+
+
   public String getTime() {
     return Stopwatch.format(endAt - startAt);
   }
@@ -62,11 +83,13 @@ public class Result {
   public String buildResultString() {
     StringWriter fw = new StringWriter();
     Mlcs mlcs = graph.mlcs;
-    fw.append("envs:\n").append(mlcs.env.toString()).append("\n");
+    fw.append("id:\n").append(this.id).append("\n");
+    fw.append("env:\n").append(env.toString()).append("\n");
+    fw.append("setting:\n").append(setting.toString()).append("\n");
     fw.append("sequences:\n");
     for (Sequence seq : mlcs.seqs) {
       fw.append("  ");
-      fw.append(new String(Arrays.copyOfRange(seq.chars, 1, seq.chars.length - 1)));
+      fw.append(seq.toString());
       fw.append('\n');
     }
     fw.append("maxLevel: ").append(String.valueOf(maxLevel)).append('\n');
@@ -161,6 +184,7 @@ public class Result {
    * @return
    */
   public static Result parse(String fileName) {
+    String id = null;
     int maxLevel = 0;
     BigDecimal mlcsCount = null;
     int nodeCount = 0;
@@ -170,11 +194,15 @@ public class Result {
     long endAt = 0;
     Mlcs mlcs = null;
     Graph graph = null;
+    Setting setting = null;
+    Setting.Env env = null;
     try {
       BufferedReader reader = new BufferedReader(new FileReader(fileName));
       String line = reader.readLine();
       while (null != line) {
-        if (line.startsWith("maxLevel")) {
+        if (line.startsWith("id")) {
+          id = contentOf(line);
+        } else if (line.startsWith("maxLevel")) {
           maxLevel = Integer.parseInt(contentOf(line));
         } else if (line.startsWith("mlcsCount")) {
           mlcsCount = new BigDecimal(contentOf(line).toCharArray());
@@ -188,6 +216,24 @@ public class Result {
           startAt = parseToTimeMills(contentOf(line));
         } else if (line.startsWith("endAt")) {
           endAt = parseToTimeMills(contentOf(line));
+        } else if (line.startsWith("setting")) {
+          List<String> datas = new ArrayList<>();
+          line = reader.readLine();
+          while (line != null && line.charAt(0) == ' ') {
+            datas.add(line);
+            line = reader.readLine();
+          }
+          setting = Setting.parse(datas.toArray(new String[0]));
+          continue;
+        } else if (line.startsWith("env")) {
+          List<String> datas = new ArrayList<>();
+          line = reader.readLine();
+          while (line != null && line.charAt(0) == ' ') {
+            datas.add(line);
+            line = reader.readLine();
+          }
+          env = Setting.Env.parse(datas.toArray(new String[0]));
+          continue;
         } else if (line.startsWith("sequences")) {
           List<String> datas = new ArrayList<>();
           line = reader.readLine();
@@ -232,7 +278,7 @@ public class Result {
         line = reader.readLine();
       }
       reader.close();
-      return new Result(graph, mlcsCount, nodeCount, maxLevel, totalCreateCount, highestCapacity, startAt, endAt);
+      return new Result(id, setting, env, graph, mlcsCount, nodeCount, maxLevel, totalCreateCount, highestCapacity, startAt, endAt);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -240,6 +286,14 @@ public class Result {
 
   private static String contentOf(String line) {
     return line.substring(line.indexOf(':') + 1).trim();
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return id;
   }
 
   /**
@@ -253,5 +307,45 @@ public class Result {
       return;
     }
     Result.parse(args[0]).visualize();
+  }
+
+  public Graph getGraph() {
+    return graph;
+  }
+
+  public Setting getSetting() {
+    return setting;
+  }
+
+  public Setting.Env getEnv() {
+    return env;
+  }
+
+  public BigDecimal getMlcsCount() {
+    return mlcsCount;
+  }
+
+  public int getMaxLevel() {
+    return maxLevel;
+  }
+
+  public long getNodeCount() {
+    return nodeCount;
+  }
+
+  public long getStartAt() {
+    return startAt;
+  }
+
+  public long getEndAt() {
+    return endAt;
+  }
+
+  public long getTotalCreateCount() {
+    return totalCreateCount;
+  }
+
+  public long getHighestCapacity() {
+    return highestCapacity;
   }
 }

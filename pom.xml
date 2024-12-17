@@ -6,10 +6,10 @@
     <artifactId>beangle-java</artifactId>
     <version>28.2</version>
   </parent>
-  <groupId>mlcs</groupId>
+  <groupId>kp-mlcs</groupId>
   <artifactId>kp-mlcs</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <name>MLCS Project</name>
 
   <description>

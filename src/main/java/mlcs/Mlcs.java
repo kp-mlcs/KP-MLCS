@@ -18,16 +18,12 @@
  */
 package mlcs;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ForkJoinPool;
 
 /**
  * MLCS problem model
@@ -44,7 +40,6 @@ public class Mlcs {
   short[][][] distanceTable;// char->seq->table
   // maximum current subscript set
   public final int maxLength;
-  Env env = null;
 
   /**
    * building successor tables
@@ -100,10 +95,6 @@ public class Mlcs {
 
   public char charAt(Location location) {
     return seqs.get(0).charAt(location.index[0]);
-  }
-
-  public ForkJoinPool newPool() {
-    return (env.parallelism > 0) ? new ForkJoinPool(env.parallelism) : new ForkJoinPool();
   }
 
   /**
@@ -202,20 +193,33 @@ public class Mlcs {
     return new Location(index);
   }
 
+  public static String[] loadData(InputStream is) throws IOException {
+    var rs = loadData(new InputStreamReader(is));
+    try {
+      is.close();
+    } catch (Exception e) {
+    }
+    return rs;
+  }
+
   /**
    * Read the file to get all strings and character sets
    */
   public static String[] loadData(File file) throws IOException {
+    return loadData(new FileReader(file));
+  }
+
+  private static String[] loadData(Reader reader) throws IOException {
+    var br = new BufferedReader(reader);
     List<String> datas = new ArrayList<>();
-    BufferedReader in = new BufferedReader(new FileReader(file));
-    String str = in.readLine();
+    String str = br.readLine();
     while (str != null) {
       if (str.length() > 0) {
         datas.add(str);
       }
-      str = in.readLine();
+      str = br.readLine();
     }
-    in.close();
+    reader.close();
     return datas.toArray(new String[datas.size()]);
   }
 
@@ -255,5 +259,17 @@ public class Mlcs {
       rs = rs.add(crs);
     }
     return rs;
+  }
+
+  public Set<Character> getCharset() {
+    return charset;
+  }
+
+  public List<Sequence> getSeqs() {
+    return seqs;
+  }
+
+  public int getMaxLength() {
+    return maxLength;
   }
 }

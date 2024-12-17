@@ -17,7 +17,7 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 
 public class DominantCounter {
-  public Mlcs mlcs;
+  public final Mlcs mlcs;
   public final Node start; // startnode
   Matrix matrix;
 
@@ -72,7 +72,7 @@ public class DominantCounter {
     ArrayList<Location> fronts = new ArrayList<>();
     fronts.add(start.id);
 
-    ForkJoinPool pool = this.mlcs.newPool();
+    ForkJoinPool pool = new ForkJoinPool();
     int i = 0;
     while (!fronts.isEmpty()) {
       //开始多线程遍历,登记新点

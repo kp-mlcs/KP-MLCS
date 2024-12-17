@@ -37,6 +37,10 @@ public class Graph {
     nodes = new HashMap[maxLevel + 2];
   }
 
+  public int getMaxLevel() {
+    return maxLevel;
+  }
+
   /**
    * How many point in the layer which contains the most points.
    *
@@ -156,12 +160,13 @@ public class Graph {
   /**
    * Stat the MLCS count
    *
+   * @param setting
    * @param totalCreateCount
    * @param highestCapacity
    * @param startAt
    * @return
    */
-  public Result stat(long totalCreateCount, long highestCapacity, long startAt) {
+  public Result stat(Setting setting, long totalCreateCount, long highestCapacity, long startAt) {
     Location startLocation = mlcs.start;
     Location endLocation = mlcs.end;
     Node end = nodes[maxLevel + 1].get(endLocation);
@@ -203,8 +208,9 @@ public class Graph {
     keyLocs.remove(endLocation);
     matchedCount = routeCounts.get(startLocation);
 
-    return new Result(this, matchedCount, keyLocs.size(), maxLevel, totalCreateCount, highestCapacity,
-      startAt, System.currentTimeMillis());
+    var id = Result.generateId(startAt);
+    return new Result(id, setting, Setting.Env.get(), this, matchedCount, keyLocs.size(), maxLevel, totalCreateCount, highestCapacity,
+        startAt, System.currentTimeMillis());
   }
 
   /**

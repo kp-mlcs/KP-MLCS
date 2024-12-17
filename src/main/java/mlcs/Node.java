@@ -42,6 +42,7 @@ public class Node implements Serializable {
 
   /**
    * link precursor to this nodes
+   *
    * @param pre
    */
   public void link(Location pre) {
@@ -115,5 +116,17 @@ public class Node implements Serializable {
     public int compare(Node o1, Node o2) {
       return o1.id.sum(level) - o2.id.sum(level);
     }
+  }
+
+  public Location getId() {
+    return id;
+  }
+
+  public Set<Location> getPres() {
+    return pres;
+  }
+
+  public short getLevel() {
+    return level;
   }
 }

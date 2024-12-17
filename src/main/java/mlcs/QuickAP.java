@@ -7,14 +7,14 @@ import java.util.concurrent.ForkJoinPool;
 
 public class QuickAP {
 
-  public static short estimateLength(Mlcs mlcs, final int estimateCount, final int maxRetry, final int increment) {
-    if (maxRetry <= 0) return estimateLength(mlcs, estimateCount, 0);
+  public static short estimateLength(Mlcs mlcs, Setting setting, final int estimateCount, final int maxRetry, final int increment) {
+    if (maxRetry <= 0) return estimateLength(mlcs, setting, estimateCount, 0);
 
     int i = 0;
     short mlcsLength = 0;
     int retryCount = 0;
     while (retryCount < maxRetry) {
-      short newLength = estimateLength(mlcs, estimateCount + i * increment, mlcsLength);
+      short newLength = estimateLength(mlcs, setting, estimateCount + i * increment, mlcsLength);
       i += 1;
       if (newLength > mlcsLength) {
         mlcsLength = newLength;
@@ -29,10 +29,10 @@ public class QuickAP {
   /**
    * Try to find a approximate length of the given MLCS
    */
-  public static short estimateLength(Mlcs mlcs, int estimateCount, int mlcsLength) {
+  public static short estimateLength(Mlcs mlcs, Setting setting, int estimateCount, int mlcsLength) {
     List<Location> routes = List.of(mlcs.start);
     Location.ScoreSorter sorter = new Location.ScoreSorter(mlcs);
-    ForkJoinPool pool = mlcs.newPool();
+    ForkJoinPool pool = setting.newPool();
     short level = 0;
     int maxLength = mlcs.maxLength;
     while (!routes.isEmpty()) {
@@ -51,7 +51,7 @@ public class QuickAP {
       //building a IndexTree to mark dominated nodes.
       ArrayList<Location> fronts = new ArrayList<>(nexts);
 //      Razor razor = new Razor(mlcs, level, true);
-      Razor3 razor = new Razor3(mlcs, level);
+      Razor3 razor = new Razor3(mlcs, setting, level);
       razor.shave(pool, fronts);
       ArrayList<Location> locs = new ArrayList<>();
       for (int i = 0, n = fronts.size(); i < n; i++) {
@@ -67,7 +67,7 @@ public class QuickAP {
       }
       //System.out.print("\restimate mlcs length..." + (level * 100.0 / maxLength) + "%");
     }
-    System.out.println("\restimate mlcs length " + level + " 100% (reserve " + estimateCount + " points)");
+    setting.notify("\restimate mlcs length " + level + " 100% (reserve " + estimateCount + " points)");
     pool.shutdown();
     return level;
   }

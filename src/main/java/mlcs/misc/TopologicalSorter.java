@@ -63,7 +63,7 @@ public class TopologicalSorter {
     }
     final short minLevel = nextLevel;
 
-    ForkJoinPool pool = crawler.mlcs.newPool();
+    ForkJoinPool pool = crawler.setting.newPool();
     int parallelism = pool.getParallelism();
 
     ArrayList<Node> levelQueue = (ArrayList<Node>) heads.get(nextLevel);

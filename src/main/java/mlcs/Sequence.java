@@ -18,6 +18,7 @@
  */
 package mlcs;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +29,7 @@ import java.util.Set;
  */
 public class Sequence {
 
-  char[] chars;
+  private char[] chars;
 
   public Sequence(char[] chars) {
     super();
@@ -37,6 +38,7 @@ public class Sequence {
 
   /**
    * Calculate each character counts
+   *
    * @return
    */
   public Map<Character, Integer> charCounts() {
@@ -56,6 +58,7 @@ public class Sequence {
 
   /**
    * Find the distinct characters
+   *
    * @return
    */
   public Set<Character> charsets() {
@@ -70,6 +73,7 @@ public class Sequence {
 
   /**
    * Query char in given position.
+   *
    * @param index
    * @return
    */
@@ -84,6 +88,7 @@ public class Sequence {
   /**
    * Build a sequence from string.
    * It replaces white spaces,a dummy dot is added at both ends.
+   *
    * @param str
    * @return
    */
@@ -142,6 +147,7 @@ public class Sequence {
 
   /**
    * build a distance array for given character.
+   *
    * @param c
    * @return
    */
@@ -154,5 +160,14 @@ public class Sequence {
       if (chars[i] == c) cnt += 1;
     }
     return distances;
+  }
+
+  @Override
+  public String toString() {
+    return new String(chars, 1, chars.length - 2);
+  }
+
+  public char[] getChars() {
+    return Arrays.copyOfRange(chars, 1, chars.length - 1);
   }
 }

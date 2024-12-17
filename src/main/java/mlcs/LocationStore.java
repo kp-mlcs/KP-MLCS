@@ -148,7 +148,7 @@ class LocationStore {
       }
       if (memoryMode) {
         // if location store is at memory mode,using recursive checks, remove points without successors.
-        int removeCount=backwardFilter((short) (level - 1));
+        int removeCount = backwardFilter((short) (level - 1));
         //report(level - 1,removeCount);
       }
     } else {

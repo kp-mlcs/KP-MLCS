@@ -6,15 +6,17 @@ import java.util.List;
 import java.util.concurrent.RecursiveTask;
 
 public abstract class AbstractCrawler {
-  public Mlcs mlcs;
+  public final Mlcs mlcs;
+  public final Setting setting;
   public final Node start; // start node
   public final Node end = null;
   short currentLevel = 0;
   Limit limit;
   LocationStore locStore;
 
-  public AbstractCrawler(Mlcs mlcs, LocationStore locStore, Limit limit) {
+  public AbstractCrawler(Mlcs mlcs, Setting setting, LocationStore locStore, Limit limit) {
     this.mlcs = mlcs;
+    this.setting = setting;
     start = new Node(mlcs.start);
     this.locStore = locStore;
     this.limit = limit;

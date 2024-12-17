@@ -17,12 +17,14 @@ import java.util.concurrent.RecursiveTask;
  */
 public class Razor3 {
 
-  Mlcs mlcs;
+  final Mlcs mlcs;
+  final Setting setting;
   short level;
 
-  public Razor3(Mlcs mlcs, int level) {
-    this.level = (short) level;
+  public Razor3(Mlcs mlcs,Setting setting, int level) {
     this.mlcs = mlcs;
+    this.setting = setting;
+    this.level = (short) level;
   }
 
   /**
@@ -84,7 +86,7 @@ public class Razor3 {
       otherMarked += newer;
       marked += newer;
     }
-    System.out.println(this.level + " sort(" + (locs.size() - disabled) + "-" + marked + "{" + keyMarked + "," + otherMarked + "}" + ") using " + Stopwatch.format(System.currentTimeMillis() - startTime));
+    setting.notify(this.level + " sort(" + (locs.size() - disabled) + "-" + marked + "{" + keyMarked + "," + otherMarked + "}" + ") using " + Stopwatch.format(System.currentTimeMillis() - startTime));
     return new int[]{disabled, marked};
   }
 
