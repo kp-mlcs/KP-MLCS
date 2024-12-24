@@ -11,6 +11,14 @@ import static mlcs.util.FileSearcher.*;
 
 public class KPMLCS {
 
+  Mlcs mlcs;
+  Setting setting;
+
+  public KPMLCS(Mlcs mlcs, Setting setting) {
+    this.mlcs = mlcs;
+    this.setting = setting;
+  }
+
   public static void main(String[] args) throws Exception {
     if (args.length == 0) {
       System.out.println("Usage:KPMLCS /path/to/your/data/file algo=[ep|ap|quick_ap] [parallelism=32] [other=value]");
@@ -32,82 +40,56 @@ public class KPMLCS {
       setting.addObserver(new Observer.Visualizer());
       setting.notify("processing file " + sourceFile + " using algorithm:" + setting.algo);
       setting.addObserver(new Observer.Debuger());
-      mine(mlcs, setting);
+      var kpmlcs = new KPMLCS(mlcs, setting);
+      kpmlcs.mine();
     }
   }
 
-  public static void mine(Mlcs mlcs, Setting setting) {
+  public void mine() {
     switch (setting.algo) {
       case "ep":
-        ep(mlcs, setting);
-        break;
       case "ap":
-        ap(mlcs, setting);
+        MlcsCrawler crawler = buildCrawler();
+        crawler.search();
+        crawler.stat();
         break;
       case "quick_ap":
-        quickAp(mlcs, setting);
+        quickAp();
         break;
       default:
         throw new RuntimeException("unknown algorithm:" + setting.algo);
     }
   }
 
-  /**
-   * Exact Precision algorithm.
-   *
-   * @param mlcs
-   * @throws IOException
-   */
-  public static void ep(Mlcs mlcs, Setting setting) {
-    long startAt = System.currentTimeMillis();
-    LocationStore store = buildStore(mlcs);
-    int maxLevel = estimateLength(mlcs, setting);
-    setting.notify("obtain max length " + maxLevel);
-    Limit limit = new Limit(mlcs.maxLength, maxLevel);
-    EPCrawler crawler = new EPCrawler(mlcs, setting, store, limit);
-    Graph graph = crawler.search();
-    statResult(setting, graph, store, startAt);
-  }
-
-  /**
-   * Approximate Precision algorithm.
-   *
-   * @param mlcs
-   * @param setting
-   * @throws IOException
-   */
-  public static void ap(Mlcs mlcs, Setting setting) {
-    long startAt = System.currentTimeMillis();
-    float precision = Float.parseFloat(setting.args.getOrDefault("precision", "0.2"));
-    int maxReserved = Integer.parseInt(setting.args.getOrDefault("maxReserved", String.valueOf(mlcs.maxLength)));
-    int estimateCount = Integer.parseInt(setting.args.getOrDefault("estimateCount", String.valueOf(mlcs.maxLength)));
-    if (maxReserved < estimateCount) {
-      var msg = "Parameter maxReserved cannot less than estimateCount";
-      setting.notify(msg);
-      throw new RuntimeException(msg);
+  public MlcsCrawler buildCrawler() {
+    if (setting.algo.equals("ep")) {
+      LocationStore store = buildStore(mlcs);
+      int maxLevel = estimateLength(mlcs, setting);
+      setting.notify("obtain max length " + maxLevel);
+      Limit limit = new Limit(mlcs.maxLength, maxLevel);
+      return new MlcsCrawler(mlcs, setting, store, limit, new LocationFilterPolicy.ReserveAll());
+    } else {
+      float precision = Float.parseFloat(setting.args.getOrDefault("precision", "0.2"));
+      int maxReserved = Integer.parseInt(setting.args.getOrDefault("maxReserved", String.valueOf(mlcs.maxLength)));
+      if (Float.compare(1, precision) <= 0) {
+        var msg = "The precision that approximate algorithm accepted should less than 1";
+        setting.notify(msg);
+        System.exit(1);
+      }
+      LocationStore store = buildStore(mlcs);
+      int maxLevel = estimateLength(mlcs, setting);
+      setting.notify("obtain max length " + maxLevel);
+      Limit limit = new Limit(mlcs.maxLength, maxLevel);
+      return new MlcsCrawler(mlcs, setting, store, limit, new LocationFilterPolicy.ReserveByPercent(mlcs, precision, maxReserved));
     }
-    if (Float.compare(1, precision) <= 0) {
-      var msg = "The precision that approximate algorithm accepted should less than 1";
-      setting.notify(msg);
-      System.exit(1);
-    }
-    LocationStore store = buildStore(mlcs);
-    int maxLevel = estimateLength(mlcs, setting);
-    setting.notify("obtain max length " + maxLevel);
-    Limit limit = new Limit(mlcs.maxLength, maxLevel);
-    APCrawler apCrawler = new APCrawler(mlcs, setting, store, limit, precision, maxReserved);
-    Graph graph = apCrawler.search();
-    statResult(setting, graph, store, startAt);
   }
 
   /**
    * Quick Approximate Precision length algorithm.
    *
-   * @param mlcs
-   * @param setting
    * @throws IOException
    */
-  public static void quickAp(Mlcs mlcs, Setting setting) {
+  private void quickAp() {
     long startAt = System.currentTimeMillis();
     int mlcsLength = estimateLength(mlcs, setting);
     long endAt = System.currentTimeMillis();
@@ -120,12 +102,6 @@ public class KPMLCS {
     int maxRetry = Integer.parseInt(setting.args.getOrDefault("maxRetry", "0"));
     int increment = Integer.parseInt(setting.args.getOrDefault("increment", String.valueOf(defaultEstimateCount)));
     return QuickAP.estimateLength(mlcs, setting, estimateCount, maxRetry, increment);
-  }
-
-  private static void statResult(Setting setting, Graph graph, LocationStore store, long startAt) {
-    Result result = graph.stat(setting, store.totalSize, store.maxSize, startAt);
-    setting.notify("find " + result.mlcsCount + " mlcs(length " + result.maxLevel + ")");
-    setting.finish(result);
   }
 
   private static LocationStore buildStore(Mlcs mlcs) {

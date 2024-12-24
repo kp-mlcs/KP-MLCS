@@ -18,8 +18,8 @@
  */
 package mlcs.misc;
 
-import mlcs.EPCrawler;
 import mlcs.Location;
+import mlcs.MlcsCrawler;
 import mlcs.Node;
 import mlcs.util.Queues;
 
@@ -30,7 +30,7 @@ import java.util.concurrent.RecursiveTask;
 
 public class TopologicalSorter {
 
-  private static Map<Short, List<Node>> findHeads(EPCrawler crawler, List<Node> starts) {
+  private static Map<Short, List<Node>> findHeads(MlcsCrawler crawler, List<Node> starts) {
     Map<Short, List<Node>> headLevels = new HashMap<>();
     for (Node head : starts) {
       short level = head.level;
@@ -51,7 +51,7 @@ public class TopologicalSorter {
    *
    * @return 瀛愬浘鐨勬渶灏忓拰鏈€澶у眰绾
    */
-  public static short[] sort(EPCrawler crawler, HashMap<Location, Node> nodes, List<Node> starts) {
+  public static short[] sort(MlcsCrawler crawler, HashMap<Location, Node> nodes, List<Node> starts) {
     Map<Short, List<Node>> heads = findHeads(crawler, starts);
     if (heads.isEmpty()) return new short[]{0, 0};
 
@@ -111,12 +111,12 @@ public class TopologicalSorter {
    */
   @SuppressWarnings("serial")
   static class LevelCrawler extends RecursiveTask<Map<Short, List<Node>>> {
-    EPCrawler crawler;
+    MlcsCrawler crawler;
     HashMap<Location, Node> nodes;
     ArrayList<Node> locations;
     int from, to, level;
 
-    public LevelCrawler(EPCrawler crawler, HashMap<Location, Node> nodes, int level, ArrayList<Node> locations, int from, int to) {
+    public LevelCrawler(MlcsCrawler crawler, HashMap<Location, Node> nodes, int level, ArrayList<Node> locations, int from, int to) {
       super();
       this.crawler = crawler;
       this.level = level;

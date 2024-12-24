@@ -74,7 +74,7 @@ public class Node implements Serializable {
    * add predecessor
    * FIXME
    */
-  public synchronized boolean addPredecessor(EPCrawler crawler, Node from, int newLevel) {
+  public synchronized boolean addPredecessor(MlcsCrawler crawler, Node from, int newLevel) {
     if (null == pres) return false;
     boolean removed = pres.remove(from.id);
     if (removed) {
